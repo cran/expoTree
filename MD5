@@ -1,4 +1,5 @@
-c741b34e01eb130fd9de174abf82d685 *DESCRIPTION
+07524b6c5dbd9d75f9f19b7c0f1d6d70 *ChangeLog
+595831d80628275db40f1692e9b2e965 *DESCRIPTION
 af9e3afb9c83fb7810e3e69287d9a4b3 *LICENCE
 1303135d08044da92df9b48104c324ee *NAMESPACE
 18a2ba58001cabee124e05fedcf76929 *R/expoTree.optim.R
@@ -19,15 +20,15 @@ f2495873fff0df63c50985da70a0bff8 *man/sim.trees.Rd
 e02dd76b3acc903c0249d3cd5e5ab2a3 *src/dlacn1.f
 23e38dbec69916f9ba6f1186cd11c7b1 *src/dlapst.f
 6fcc2769db4b0b3a9631b3a0ef590be2 *src/dlarpc.f
-400a8934d04dd4805f8b339587d0f1e0 *src/expmv.c
+e416ba35938eb99f31d43c56da70fcad *src/expmv.c
 538fd16ba361980280ecf7c2626a0eeb *src/expmv.h
 56d2e957a68f6d8d2ad200f99444a773 *src/expo.h
-0ee431e8dcd6d580661ee4dde647ca7d *src/expoTree.c
+6c312f53226d7880d93ba52949771b70 *src/expoTree.c
 82c90c56a0bcf2ac5cf13eed89869841 *src/expoTree.h
-8903a308fee807c12080c1afc337fd5e *src/expomv.c
+c394c5fd8683e86c46eb859df11d733e *src/expomv.c
 b74a62d2f993e779e568bb88c2b55a92 *src/expomv.h
 d634dbbae6c57669420a198f7c2c1ce2 *src/normAm.c
-6b95e5af8a0e5169abc33dca79b7b10f *src/simulate_trees.cpp
+4f530eb79ece1079176965c3fda0ce65 *src/simulate_trees.cpp
 fd7cbe628a33d61bda21114fa306f90a *src/stdeg.c
 55731f69f60b9ae31f063367641ffd74 *src/theta_taylor.h
 2de9f99ed4ffc564df32a413ea9d1ca0 *src/theta_taylor_half.h

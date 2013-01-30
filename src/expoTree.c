@@ -42,7 +42,7 @@ SEXP expoTreeEval(SEXP parameters, SEXP times, SEXP ttypes) {
 
   if (N < maxExtant || beta <= 0.0 || mu < 0.0 || 
       psi < 0.0 || rho < 0.0 || rho > 1.0) {
-    for (i = 0; i < N; ++i) p0[i] = -INFINITY;
+    for (i = 0; i < N; ++i) p0[i] = R_NegInf;
   } else {
     // set initial value of p
     if (extant == 0) {
@@ -74,7 +74,7 @@ SEXP expoTreeEval(SEXP parameters, SEXP times, SEXP ttypes) {
 /****************************************************************************/
 
 SEXP expoTreeSurvival(SEXP parameters, SEXP torig) {
-  double fx = -INFINITY;
+  double fx = R_NegInf;
 
   PROTECT(parameters = AS_NUMERIC(parameters));
   PROTECT(torig = AS_NUMERIC(torig));
@@ -105,11 +105,11 @@ SEXP expoTreeSurvival(SEXP parameters, SEXP torig) {
   int i = 0;
 
   if (beta <= 0.0 || mu < 0.0 || psi < 0.0 || rho < 0.0 || rho > 1.0) {
-    for (i = 0; i <= N; ++i) p0[i] = -INFINITY;
+    for (i = 0; i <= N; ++i) p0[i] = R_NegInf;
   } else {
     for (i = 0; i <= N; ++i) p0[i] = 1.0;
     rExpoTree(&N,&ki,&beta,&mu,&psi,&nt,ptorig,&ttype,p0,&t0,&SI,&vf,&rs);
-    for (i = 0; i <= N; ++i) p0[i] = (p0[i] < 0) ? log(1.-exp(p0[i])) : -INFINITY;
+    for (i = 0; i <= N; ++i) p0[i] = (p0[i] < 0) ? log(1.-exp(p0[i])) : R_NegInf;
   }
 
   UNPROTECT(3);
@@ -159,7 +159,7 @@ SEXP infTreeEval(SEXP parameters, SEXP times, SEXP ttypes, SEXP survival) {
   }
 
   if (beta <= 0.0 || mu < 0.0 || psi < 0.0 || rho < 0.0 || rho > 1.0) {
-    *lik = -INFINITY;
+    *lik = R_NegInf;
   } else {
     double c1;
     double c2;

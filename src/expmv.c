@@ -97,10 +97,10 @@ void expmv(double t, int n, matMat fmv, normFunc nf, traceFunc tf,
       }
     }
 
-    cost = INFINITY;
+    cost = R_PosInf;
     tcol = 0;
     for (i = 0; i < m_max; ++i) {
-      ccost = INFINITY;
+      ccost = R_PosInf;
       for (j = 0; j < p_max-1; ++j) {
         if (C[i*(p_max-1)+j] < ccost) {
           ccost = C[i*(p_max-1)+j];

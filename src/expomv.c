@@ -128,7 +128,7 @@ void expoTree(int n, double* times, int* ttypes,
       Rprintf("t(i)   = %8.4e\n",t);
       Rprintf("t(i+1) = %8.4e\n",times[i]);
       Rprintf("dt     = %8.4e\n",dt);
-      p[0] = -INFINITY;
+      p[0] = R_NegInf;
       return;
     }
 
@@ -144,7 +144,7 @@ void expoTree(int n, double* times, int* ttypes,
       while (wrk_info == 0) {
         if (wrk_steps > max_wrk_steps) {
           Rprintf("Maximum time step intervals reached.\n");
-          for (j = 0; j < N; ++j) p[j] = -INFINITY;
+          for (j = 0; j < N; ++j) p[j] = R_NegInf;
           return;
         }
 
@@ -160,7 +160,7 @@ void expoTree(int n, double* times, int* ttypes,
 
           // Error during calculation. Return INF.
           if (info < 0) {
-            for (j = 0; j < N; ++j) p[j] = -INFINITY;
+            for (j = 0; j < N; ++j) p[j] = R_NegInf;
             return;
           }
 
@@ -173,7 +173,7 @@ void expoTree(int n, double* times, int* ttypes,
           // validate 2-norm of the vector
           if (nrm < expo->cutoff) {
             if (expo->vflag > 1) Rprintf("Vector norm is zero. Aborting.\n");
-            for (i = 0; i < N; ++i) p[i] = -INFINITY;
+            for (i = 0; i < N; ++i) p[i] = R_NegInf;
             return;
           }
 
@@ -236,7 +236,7 @@ void expoTree(int n, double* times, int* ttypes,
             Rprintf("  pT(%3d) = %12.6e\n",i,pT[i]);
           }
         }
-        p[0] = -INFINITY;
+        p[0] = R_NegInf;
         return;
       }
       scale += log(nrm);

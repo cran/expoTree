@@ -1,0 +1,5 @@
+2012-01-30 Gabriel E Leventhal <gabriel@leventhal.ch>
+
+  * src/simulate_trees.cpp: Replaced GNU INFINITY macro with R_PosInf.
+	* DESCRIPTION (Version): 0.8.1
+

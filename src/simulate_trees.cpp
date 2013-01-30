@@ -253,7 +253,7 @@ int RSimTrees(int* N, double* beta, double* mu, double* psi,
   pars.mu   = *mu;
   pars.psi  = *psi;
 
-  if (*max_time < 0) *max_time = INFINITY;
+  if (*max_time < 0) *max_time = R_PosInf;
 
   vector<Individual> pop;
   list<int> inf;
@@ -283,7 +283,7 @@ SEXP RSimEpi(SEXP parameters, SEXP max_samples, SEXP min_outbreak, SEXP max_time
   int min_outb = INTEGER_VALUE(min_outbreak);
   double max_t = NUMERIC_VALUE(max_time);
   
-  if (max_t < 0) max_t = INFINITY;
+  if (max_t < 0) max_t = R_PosInf;
 
   vector<Individual> pop;
   list<int> inf;
