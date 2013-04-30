@@ -41,7 +41,6 @@
   Blackford et al. (1997) "ScaLAPACK Users' Guide". Society for Industrial and
   Applied Mathematics, Philadelphia, PA.
 }
-
 \keyword{phylodynamics}
 \examples{
   # simulate trees
@@ -51,7 +50,8 @@
   psi <- 0.1
   rho <- 0
   nsamp <- 20
-  forest <- lapply(1:2,function(x) sim.trees(N,beta,mu,psi,nsamp))
+  epis <- lapply(1:2,function(x) sim.epi(N,beta,mu,psi,nsamp))
+  forest <- lapply(epis,function(x) cbind(x$times,x$ttypes))
 
   # plot lineages-through-time
   plotLTT(forest)
@@ -62,16 +62,15 @@
 
   # calculate likelihood for the forest
   lik <- sapply(forest,function(tree) {
-    runExpoTree(N,beta,mu,psi,rho,tree[,1],tree[,2])
+    runExpoTree(matrix(c(N,beta,mu,psi,rho),nrow=1),tree[,1],tree[,2])
   })
   cat("Likelihood = ",sum(lik),"\n")
 
-  if (! is.nan(lik)) {
+  if (! is.nan(sum(lik))) {
     # Find optimal parameters
-    opt <- expoTree.optim(forest,
-                   lo=c(max(max.lineages),1e-10,1e-10),hi=c(20,3,1),
+    (opt <- expoTree.optim(forest,pars=c(N,beta,psi),
+                   lo=c(max(max.lineages),0,0),hi=c(50,3,1),
                    fix=c(FALSE,FALSE,TRUE,FALSE,TRUE),
-                   fix.val=c(0,0,-psi/(psi+mu),0,0),
-                   control=list(trace=1,REPORT=1,maxit=10))
+                   fix.val=c(0,0,-psi/(psi+mu),0,0)))
   }
 }

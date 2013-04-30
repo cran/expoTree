@@ -8,7 +8,9 @@ Creates a (or adds to an existing) plot of the lineages-through-time of a
 list of phylogenetic trees.
 }
 \usage{
-plotLTT(trees, col=rgb(.5,.5,.5,.5), xlab="Time", ylab="Lineages", log="y", add=FALSE, ...) 
+plotLTT(trees,col=rgb(.5,.5,.5,.5),xlab="Time", ylab="Lineages",log="y",add=FALSE,
+        plot=TRUE,plot.tree=NA,type="s",...) 
+
 }
 \arguments{
   \item{trees}{
@@ -30,6 +32,16 @@ plotLTT(trees, col=rgb(.5,.5,.5,.5), xlab="Time", ylab="Lineages", log="y", add=
   \item{add}{
     Add the lineages to the current plotting device.
   }
+  \item{plot}{
+    If set to FALSE, only the number of lineages at each time point are
+    returned.
+  }
+  \item{plot.tree}{
+    Plot the phylogenetic tree in the background. Only works for one tree.
+  }
+  \item{type}{
+    Line type. Defaults to steps 's'.
+  }
   \item{...}{
     Other parameters to pass to 'plot()'.
   }
@@ -44,13 +56,14 @@ plotLTT(trees, col=rgb(.5,.5,.5,.5), xlab="Time", ylab="Lineages", log="y", add=
   \code{\link{expoTree}}
 }
 \examples{
-  N <- 500
+  N <- 100
   beta <- 1
-  mu <- 0.08
-  psi <- 0.02
+  mu <- 0.1
+  psi <- 0.4
   nsamp <- 100
 
-  trees <- lapply(1:10,function(i) sim.trees(N,beta,mu,psi,nsamp))
+  epis <- lapply(1:10,function(i) sim.epi(N,beta,mu,psi,nsamp))
+  trees <- lapply(epis,function(x) cbind(x$times,x$ttypes))
   plotLTT(trees)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

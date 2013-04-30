@@ -7,14 +7,16 @@
 #include <math.h>
 #include <string.h>
 #include <float.h>
-#include <R.h>
 
 #include "expo.h"
 #include "expmv.h"
 
-void rExpoTree(int* RN, int* Rki, double* Rbeta, double* Rmu,
-    double* Rpsi, int* Rn, double* times, int* ttypes, double* p,
-    double* t0, int* RSImodel, int* Rvflag, int* Rrescale);
+#include "expo_type.h"
+
+void rExpoTree(double* RN, int* Rki, double* Rbeta, double* Rmu,
+    double* Rpsi, int* Rn, int* parVecLen, 
+    double* times, int* ttypes, double* p, double* t0, 
+    int* RSImodel, int* Rvflag, int* Rrescale);
 
 void expoTree(int n, double* times, int* ttypes, 
     double* p, int wrklen, double* wrk, int iwrklen, int* iwrk);

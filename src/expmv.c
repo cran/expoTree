@@ -33,7 +33,13 @@ void expmv(double t, int n, matMat fmv, normFunc nf, traceFunc tf,
   wlen = 2*p_max + 2*n*ncol + m_max*(p_max-1);
   nalen = 3*n + (4*n+1)*ncol;
   if (wrklen < wlen+nalen || iwrklen < 2*n + 4) {
-    if (prnt) Rprintf("Not enough workspace supplied!\n");
+    if (prnt) {
+      Rprintf("Not enough workspace supplied!\n");
+      Rprintf("  Required 'double': %d\n",wlen+nalen);
+      Rprintf("  Supplied         : %d\n",wrklen);
+      Rprintf("  Required 'int'   : %d\n",2*n+4);
+      Rprintf("  Supplied         : %d\n",iwrklen);
+    }
     *info = -2;
     return;
   }

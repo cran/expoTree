@@ -9,22 +9,11 @@ It takes branching and sampling times as an argument and integrates the
 likelihoood function over the whole tree.
 }
 \usage{
-infExpoTree(beta, mu, psi, rho, times, ttypes, survival = TRUE)
+infExpoTree(pars,times,ttypes,survival=TRUE,vflag=0,root.lineages=0) 
 }
 \arguments{
-  \item{beta}{
-    Branching rate. For epidemic trees, this is the infection rate. For species
-    trees, this is the speciation rate.
-  }
-  \item{mu}{
-    Extinction rate. For epidemic trees, this is the death/recovery rate. For species
-    trees, this is the extinction rate.
-  }
-  \item{psi}{
-    Sampling rate.
-  }
-  \item{rho}{
-    Initial sampling rate.
+  \item{pars}{
+    Vector of parameters. pars = (beta,mu,psi,rho). See 'Details'.
   }
   \item{times}{
     Vector of event times.
@@ -35,6 +24,20 @@ infExpoTree(beta, mu, psi, rho, times, ttypes, survival = TRUE)
   \item{survival}{
     Condition on survival of the tree.
   }
+  \item{vflag}{
+    Set verbosity level.
+  }
+  \item{root.lineages}{
+    Number of lineages that are extant at the 'root' of the tree.
+  }
+}
+\details{
+  The parameters are:
+    
+  - beta  : Branching rate. For epidemic trees, this is the infection rate. For species trees, this is the speciation rate.
+  - mu    : Extinction rate. For epidemic trees, this is the death/recovery rate. For species trees, this is the extinction rate.
+  - psi   : Sampling rate.
+  - rho   : Initial sampling rate.
 }
 \value{
 Likelihood

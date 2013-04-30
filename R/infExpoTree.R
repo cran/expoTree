@@ -1,8 +1,9 @@
-infExpoTree <- function(beta,mu,psi,rho,times,ttypes,survival=TRUE) 
+infExpoTree <- function(pars,times,ttypes,survival=TRUE,vflag=0,
+                        root.lineages=0) 
 {
-  pars <- as.vector(c(beta,mu,psi,rho))
   f <- .Call("infTreeEval",parameters=pars,
-      times=as.numeric(times),ttypes=as.integer(ttypes),survival=as.integer(survival))
+      times=as.numeric(times),ttypes=as.integer(ttypes),
+      survival=as.integer(c(survival,vflag,root.lineages)))
   return(f)
 }
 

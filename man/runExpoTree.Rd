@@ -9,26 +9,14 @@ It takes branching and sampling times as an argument and integrates the
 likelihoood function over the whole tree.
 }
 \usage{
-runExpoTree(N, beta, mu, psi, rho, times, ttypes, survival = TRUE)
+runExpoTree(pars,times,ttypes,survival=TRUE,shifts=NULL,vflag=0,
+                        return.full=FALSE,rescale=TRUE,root.lineages=0)
 }
 \arguments{
-  \item{N}{
-    Total population size. Must be at least the maximal number of extant lineages
-    at any given time.
-  }
-  \item{beta}{
-    Branching rate. For epidemic trees, this is the infection rate. For species
-    trees, this is the speciation rate.
-  }
-  \item{mu}{
-    Extinction rate. For epidemic trees, this is the death/recovery rate. For species
-    trees, this is the extinction rate.
-  }
-  \item{psi}{
-    Sampling rate.
-  }
-  \item{rho}{
-    Initial sampling rate.
+  \item{pars}{
+    Matrix of parameters. If the number of columns is larger than 5, only the
+    first 5 columns are used. Each row is of the form c(N,beta,mu,psi,rho).
+    The rows correspond to rate shifts.
   }
   \item{times}{
     Vector of event times.
@@ -39,12 +27,44 @@ runExpoTree(N, beta, mu, psi, rho, times, ttypes, survival = TRUE)
   \item{survival}{
     Condition on the likelihood of observing the tree.
   }
+  \item{shifts}{
+    Times of rate shifts.
+  }
+  \item{vflag}{
+    Verbosity level.
+  }
+  \item{return.full}{
+    Return full probability vector rather than just the entry for I=1.
+  }
+  \item{rescale}{
+    Rescale probability vector in the calculation. Avoids some numerical
+    issues.
+  }
+  \item{root.lineages}{
+    Number of lineages that are extant at the 'root' of the tree.
+  }
 }
 \value{
-  Log-Likelihood
+  Log-Likelihood or vector of log-likelihoods.
+}
+\details{
+  Parameter matrix:
+
+  N = Total population size. Must be at least the maximal number of extant lineages
+  at any given time.
+
+  beta = Branching rate. For epidemic trees, this is the infection rate. For
+  species trees, this is the speciation rate.
+
+  mu = Extinction rate. For epidemic trees, this is the death/recovery rate.
+  For species trees, this is the extinction rate.
+
+  psi = Sampling rate.
+
+  rho = Initial sampling rate.
 }
 \references{
-  Leventhal, Bonhoeffer, Guenthard & Stadler, 2012
+  Leventhal, Guenthard, Bonhoeffer & Stadler, 2013
 }
 \author{
   Gabriel E Leventhal
@@ -61,8 +81,8 @@ beta <- 1
 mu <- 0.1
 psi <- 0
 rho <- 1
-
-lik <- runExpoTree(N,beta,mu,psi,rho,times,ttypes)
+pars <- matrix(c(N,beta,mu,psi,rho),nrow=1)
+lik <- runExpoTree(pars,times,ttypes)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

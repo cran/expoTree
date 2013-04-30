@@ -1,118 +1,168 @@
 #include "expoTree.h"
 
-SEXP expoTreeEval(SEXP parameters, SEXP times, SEXP ttypes) {
+SEXP expoTreeEval(SEXP parameters, SEXP times, SEXP ttypes, SEXP survival) {
   PROTECT(parameters = AS_NUMERIC(parameters));
   PROTECT(times = AS_NUMERIC(times));
   PROTECT(ttypes = AS_INTEGER(ttypes));
+  PROTECT(survival = AS_INTEGER(survival));
+
+  Rboolean parMat = isMatrix(parameters);
+  int parVecLen = 1;
+  int parVecCol = 1;
+  int quit = 0;
+  int surv = INTEGER(survival)[0];
+  double zeroTol = 1e-12;
+
+  int vf = (LENGTH(survival) > 1) ? INTEGER(survival)[1] : 0;
+  if (vf) Rprintf("Verbose mode is on.\n");
+
+  int rs = (LENGTH(survival) > 2) ? (INTEGER(survival)[2]>0) : 1;
+  if (rs && vf) Rprintf("Rescaling is on.\n");
+
+  int extant = (LENGTH(survival) > 3) ? INTEGER(survival)[3] : 0;
+  if (vf) Rprintf("%d lineages extant at the root.\n",extant);
+
+  // check dimensions
+  if (parMat) {
+    if (vf) Rprintf("Checking matrix dimensions: ");
+    SEXP parDim = GET_DIM(parameters);
+    parVecLen = INTEGER(parDim)[0];
+    parVecCol = INTEGER(parDim)[1];
+    if (vf) Rprintf("nrow = %d, ncol = %d\n",parVecLen,parVecCol);
+    if (parVecCol < 5 || parVecLen < 1) quit = 1;
+  } else {
+    if (LENGTH(parameters) < 5) {
+      if (vf) Rprintf("Error: parameter vector must have a minimum length of 5!\n");
+      quit = 1;
+    }
+  }
+
+  if (quit) {
+    // not enough columns
+    if (vf) Rprintf("Exiting prematurely.\n");
+    SEXP p;
+    PROTECT(p = NEW_NUMERIC(1));
+    REAL(p)[0] = R_NegInf;
+    UNPROTECT(5);
+    return p;
+  }
+
+  int i;
 
   double* pars = NUMERIC_POINTER(parameters);
 
-  int N = (int) pars[0];
-  double beta = pars[1];
-  double mu = pars[2];
-  double psi = pars[3];
-  double rho = pars[4];
+  double* N    = pars;
+  double* beta = pars+parVecLen;
+  double* mu   = pars+2*parVecLen;
+  double* psi  = pars+3*parVecLen;
+  double* drho = pars+4*parVecLen;
+
+  /* only use the first rho entry */
+  double rho = drho[0];
+
+  /* convert N reals to integers */
+  int Nmax = 0;
+  for (i = 0; i < parVecLen; ++i) {
+    if (Nmax < ceil(N[i])) Nmax = (int) ceil(N[i]);
+  }
+  if (vf) Rprintf("Maximum dimension: N = %d\n",Nmax);
 
   int SI = 1;
-  int vf = 0;
-  int rs = 1;
 
-  double* ptimes = NUMERIC_POINTER(times);
-  int* pttypes = INTEGER_POINTER(ttypes);
-  int nt = LENGTH(times);
-  int extant = 0;
+  double* ptimes  = NUMERIC_POINTER(times);
+  int*    pttypes = INTEGER_POINTER(ttypes);
+  int     nt      = LENGTH(times);
+
   int maxExtant = 0;
 
-  int i = 0;
   int ki = 0;
 
   SEXP p;
-  PROTECT(p = NEW_NUMERIC(N+1));
+  PROTECT(p = NEW_NUMERIC(Nmax+1));  /* +1 for p(0) */
   double* p0 = NUMERIC_POINTER(p);
 
   int root = (ptimes[nt-1] == ptimes[nt-2]) ? 1 : 0;
+  if (root && vf) Rprintf("Root correction required.\n");
 
   double t0 = 0.0;
+  double scale = 0.0;
 
   for (i = nt-1; i >= 0; --i) {
-    if (pttypes[i] == 0) --extant;
-    else ++extant;
+    switch (pttypes[i]) {
+      case 1:
+        ++extant;
+        break;
+      case 0:
+      case 2:
+      case 4:
+        --extant;
+        break;
+      default:
+        break;
+    }
     if (maxExtant < extant) maxExtant = extant;
   }
+  if (vf) {
+    Rprintf("%d extant lineages at the present; %d maximum.\n",
+            extant,maxExtant);
+  }
 
-  if (N < maxExtant || beta <= 0.0 || mu < 0.0 || 
-      psi < 0.0 || rho < 0.0 || rho > 1.0) {
-    for (i = 0; i < N; ++i) p0[i] = R_NegInf;
-  } else {
-    // set initial value of p
-    if (extant == 0) {
-      p0[0] = 0.0;
-      for (i = 1; i <= N; ++i) p0[i] = psi;
-      ki = 1;
-      t0 = ptimes[0];
-      ptimes = ptimes+1;
-      pttypes = pttypes+1;
-      --nt;
-    } else {
-      ki = extant;
-      p0[0] = 0.0;
-      for (i = 1; i <= N; ++i) {
-        if (i < extant) p0[i] = 0.0;
-        else p0[i] = pow(rho,1.*extant)*pow(1.-rho,i-extant);
+  int goodParams = 1;
+  for (i = 0; i < parVecLen && goodParams; ++i) {
+    if (beta[i] <= 0.0 || mu[i] < 0.0 || psi[i] < 0.0) goodParams = 0;
+  }
+
+  if (! goodParams || rho < 0.0 || rho > 1.0) {
+    if (vf) {
+      Rprintf("Illegal parameters:\n");
+      for (i = 0; i < parVecLen; ++i) {
+        Rprintf("%f %f %f %f %f\n",N[i],beta[i],mu[i],psi[i],drho[i]);
       }
     }
-    rExpoTree(&N,&ki,&beta,&mu,&psi,&nt,ptimes,pttypes,p0,&t0,&SI,&vf,&rs);
-    if (root) {
-      for (i = 0; i < N; ++i) p0[i] -= M_LN2 + log(beta) + log(1.-1./N);
+    for (i = 0; i <= Nmax; ++i) p0[i] = R_NegInf;
+  } else {
+    if (surv) {
+      p0[0] = 1.0;
+      for (i = 1; i <= N[0]; ++i) {
+        p0[i] = (rho <= 0.0 || rho >= 1.0) ? 0.0 : pow(1.-rho,i);
+      }
+      for (i = N[0]+1; i <= Nmax; ++i) p0[i] = 0.0;
+      rExpoTree(N,&ki,beta,mu,psi,&nt,&parVecLen,ptimes,pttypes,p0,&t0,&SI,&vf,&rs);
+      for (i = 0; i <= N[parVecLen-1]; ++i) {
+        if (p0[i] >= zeroTol) {
+          Rprintf("Log survival probability is non-negative! p(%d) = %g\n",i,p0[i]);
+        }
+        p0[i] = (p0[i] < 0.0) ? log(1.-exp(p0[i])) : R_NegInf;
+      }
+    } else {
+      // set initial value of p
+      if (extant == 0) {
+        p0[0] = 0.0;
+        for (i = 1; i <= N[0]; ++i) p0[i] = psi[0];
+        ki = 1;
+        t0 = ptimes[0];
+        ptimes = ptimes+1;
+        pttypes = pttypes+1;
+        --nt;
+      } else {
+        ki = extant;
+        p0[0] = 0.0;
+        scale = extant*log(rho);
+        for (i = 1; i <= N[0]; ++i) {
+          if (i < extant) p0[i] = 0.0;
+          else p0[i] = pow(1.-rho,i-extant);
+        }
+      }
+      for (i = N[0]+1; i <= Nmax; ++i) p0[i] = 0.0;
+      rExpoTree(N,&ki,beta,mu,psi,&nt,&parVecLen,ptimes,pttypes,p0,&t0,&SI,&vf,&rs);
+      for (i = 0; i <= N[parVecLen-1]; ++i) {
+        p0[i] += scale;
+        if (root) p0[i] -= M_LN2 + log(beta[parVecLen-1]) + log(1.-1./N[parVecLen-1]);
+      }
     }
   }
 
-  UNPROTECT(4);
-  return p;
-}
-
-/****************************************************************************/
-
-SEXP expoTreeSurvival(SEXP parameters, SEXP torig) {
-  double fx = R_NegInf;
-
-  PROTECT(parameters = AS_NUMERIC(parameters));
-  PROTECT(torig = AS_NUMERIC(torig));
-
-  double* pars = NUMERIC_POINTER(parameters);
-
-  int N = (int) pars[0];
-  double beta = pars[1];
-  double mu = pars[2];
-  double psi = pars[3];
-  double rho = pars[4];
-
-  int SI = 1;
-  int vf = 0;
-  int rs = 1;
-
-  double* ptorig = NUMERIC_POINTER(torig);
-  int extant = 0;
-  int maxExtant = 0;
-
-  int ttype = 1;
-  double t0 = 0.0;
-  SEXP p;
-  PROTECT(p = NEW_NUMERIC(N+1));
-  double* p0 = NUMERIC_POINTER(p);
-  int ki = 0;
-  int nt = 1;
-  int i = 0;
-
-  if (beta <= 0.0 || mu < 0.0 || psi < 0.0 || rho < 0.0 || rho > 1.0) {
-    for (i = 0; i <= N; ++i) p0[i] = R_NegInf;
-  } else {
-    for (i = 0; i <= N; ++i) p0[i] = 1.0;
-    rExpoTree(&N,&ki,&beta,&mu,&psi,&nt,ptorig,&ttype,p0,&t0,&SI,&vf,&rs);
-    for (i = 0; i <= N; ++i) p0[i] = (p0[i] < 0) ? log(1.-exp(p0[i])) : R_NegInf;
-  }
-
-  UNPROTECT(3);
+  UNPROTECT(5);
   return p;
 }
 
@@ -140,8 +190,15 @@ SEXP infTreeEval(SEXP parameters, SEXP times, SEXP ttypes, SEXP survival) {
   double* ptimes = NUMERIC_POINTER(times);
   int* pttypes = INTEGER_POINTER(ttypes);
   int nt = LENGTH(times);
-  int extant = 0;
   int maxExtant = 0;
+
+  int surv = INTEGER(survival)[0];
+
+  int vf = (LENGTH(survival) > 1) ? INTEGER(survival)[1] : 0;
+  if (vf) Rprintf("Verbose mode is on.\n");
+
+  int extant = (LENGTH(survival) > 2) ? INTEGER(survival)[2] : 0;
+  if (vf) Rprintf("%d lineages extant at the root.\n",extant);
 
   SEXP fx;
   PROTECT(fx = NEW_NUMERIC(1));
@@ -153,12 +210,23 @@ SEXP infTreeEval(SEXP parameters, SEXP times, SEXP ttypes, SEXP survival) {
   int i;
 
   for (i = nt-1; i >= 0; --i) {
-    if (pttypes[i] == 0) --extant;
-    else ++extant;
+    switch (pttypes[i]) {
+      case 1:
+        ++extant;
+        break;
+      case 0:
+      case 2:
+      case 4:
+        --extant;
+        break;
+      default:
+        break;
+    }
     if (maxExtant < extant) maxExtant = extant;
   }
 
   if (beta <= 0.0 || mu < 0.0 || psi < 0.0 || rho < 0.0 || rho > 1.0) {
+    if (vf) Rprintf("Some parameters are out of range.");
     *lik = R_NegInf;
   } else {
     double c1;
@@ -171,7 +239,7 @@ SEXP infTreeEval(SEXP parameters, SEXP times, SEXP ttypes, SEXP survival) {
     c2 = -(beta-mp-2*beta*rho)/c1;
     *lik = -log(2*beta);
 
-    if (survival) {
+    if (surv) {
       p0 = exp(-c1*ptimes[nt-1])*(1.-c2);
       p0 = beta+mp+c1*(p0-(1.+c2))/(p0+1.+c2);
       p0 = p0/(2.*beta);

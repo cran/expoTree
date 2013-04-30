@@ -1,48 +1,4 @@
-#include <iostream>
-#include <vector>
-#include <list>
-#include <cmath>
-#include <typeinfo>
-#include <string>
-#include <sstream>
-#include <algorithm>
-#include <getopt.h>
-using namespace std;
-
-#include <R.h>
-#include <Rdefines.h>
-#include <Rmath.h>
-
-// ===========================================================================
-
-struct _pars {
-  int N;
-  double beta;
-  double mu;
-  double psi;
-  double t;
-} pars;
-
-// ===========================================================================
-
-double lambda(int I) { return pars.beta*(1.-1.*I/pars.N); }
-
-// ===========================================================================
-
-struct Individual {
-  Individual(double it = 0.0, int p = 0) 
-    : itime(it), dtime(-1.0), stime(-1.0), parent(p), id(-1)
-  {}
-
-  virtual ~Individual() {}
-
-  double itime;  // infection time
-  double dtime;  // death time
-  double stime;  // sample time
-  int parent;    // parent individual
-  int id;        // my id
-  vector<int> children;
-};
+#include "simulate_trees.h"
 
 // ===========================================================================
 
@@ -68,10 +24,9 @@ int getBranchingTimes(vector<double>& times, int subclade,
 // ===========================================================================
 
 string newickString(int subclade, const vector<Individual>& pop, 
-    bool sampled = false) 
+    double t, bool sampled) 
 {
   ostringstream str;
-  double t(pars.t);
   double dtime(0.0);
   if (pop[subclade].stime >= 0.0) dtime = pop[subclade].stime;
   else if (pop[subclade].dtime >= 0.0) dtime = pop[subclade].dtime;
@@ -89,7 +44,7 @@ string newickString(int subclade, const vector<Individual>& pop,
     str << "'";
     for (int i(pop[subclade].children.size()-1); i >= 0; --i) {
       str << ":" << t-pop[pop[subclade].children[i]].itime;
-      str << "," << newickString(pop[subclade].children[i],pop,sampled) << ")";
+      str << "," << newickString(pop[subclade].children[i],pop,t,sampled) << ")";
       // str << "'" << subclade << "->" << pop[subclade].children[i] << "'";
       t = pop[pop[subclade].children[i]].itime;
     }
@@ -100,8 +55,8 @@ string newickString(int subclade, const vector<Individual>& pop,
 
 // ===========================================================================
 
-double sim_trees(vector<Individual>& pop, list<int>& inf, vector<int>& samples,
-    int max_samples, double max_time, int min_outbreak) {
+double sim_trees(const Pars& pars, vector<Individual>& pop, list<int>& inf, 
+    vector<int>& samples, int max_samples, double max_time, int min_outbreak) {
   GetRNGstate();
 
   double t(0.0);
@@ -142,7 +97,7 @@ double sim_trees(vector<Individual>& pop, list<int>& inf, vector<int>& samples,
         }
         break;
       }
-      if (pars.N > 0) l = lambda(I);
+      if (pars.N > 0) l = lambda(I,pars);
       else l = pars.beta;
       totalRate = l*I + (pars.mu+pars.psi)*I;
       nextEventTime = t-log(unif_rand())/totalRate;
@@ -212,6 +167,7 @@ void inf_times(double t, vector<Individual>& pop,
 {
   vector<Individual>::iterator ind(pop.begin());
   int i(0);
+  // loop through all individuals of the population
   while (ind != pop.end() && i < len) {
     if (ind->itime >= 0) {
       x0[i] = t-ind->itime;
@@ -234,109 +190,4 @@ void inf_times(double t, vector<Individual>& pop,
 }
 
 // ===========================================================================
-
-extern "C" {
-  int RSimTrees(int* N, double* beta, double* mu, double* psi,
-      int* max_samples, int* min_outbreak, double* max_time,
-      int* maxlen, double* times, int* ttypes);
-
-  SEXP RSimEpi(SEXP parameters, SEXP max_samples, SEXP min_outbreak, SEXP max_time);
-}
-
-// ===========================================================================
-
-int RSimTrees(int* N, double* beta, double* mu, double* psi,
-      int* max_samples, int* min_outbreak, double* max_time,
-      int* maxlen, double* times, int* ttypes) {
-  pars.N    = *N;
-  pars.beta = *beta;
-  pars.mu   = *mu;
-  pars.psi  = *psi;
-
-  if (*max_time < 0) *max_time = R_PosInf;
-
-  vector<Individual> pop;
-  list<int> inf;
-  vector<int> samples;
-
-  double t = sim_trees(pop,inf,samples,*max_samples,*max_time,*min_outbreak);
-  to_array(t,pop,samples,*maxlen,times,ttypes);
-
-  return 1;
-}
-
-// ===========================================================================
-
-SEXP RSimEpi(SEXP parameters, SEXP max_samples, SEXP min_outbreak, SEXP max_time)
-{
-  PROTECT(parameters = AS_NUMERIC(parameters));
-  PROTECT(max_samples = AS_INTEGER(max_samples));
-  PROTECT(min_outbreak = AS_INTEGER(min_outbreak));
-  PROTECT(max_time = AS_NUMERIC(max_time));
-
-  pars.N    = (int) (NUMERIC_POINTER(parameters)[0]);
-  pars.beta = NUMERIC_POINTER(parameters)[1];
-  pars.mu   = NUMERIC_POINTER(parameters)[2];
-  pars.psi  = NUMERIC_POINTER(parameters)[3];
-
-  int max_samp = INTEGER_VALUE(max_samples);
-  int min_outb = INTEGER_VALUE(min_outbreak);
-  double max_t = NUMERIC_VALUE(max_time);
-  
-  if (max_t < 0) max_t = R_PosInf;
-
-  vector<Individual> pop;
-  list<int> inf;
-  vector<int> samples;
-
-  double t = sim_trees(pop,inf,samples,max_samp,max_t,min_outb);
-
-  int maxlen = 2*samples.size();
-  int itlen  = pop.size();
-
-  SEXP times = PROTECT(NEW_NUMERIC(maxlen));
-  SEXP ttypes = PROTECT(NEW_INTEGER(maxlen));
-  SEXP itimes = PROTECT(NEW_NUMERIC(itlen));
-  SEXP dtimes = PROTECT(NEW_NUMERIC(itlen));
-  SEXP dtypes = PROTECT(NEW_INTEGER(itlen));
-  SEXP id = PROTECT(NEW_INTEGER(itlen));
-  SEXP parent = PROTECT(NEW_INTEGER(itlen));
-
-  double *ptimes = NUMERIC_POINTER(times);
-  int    *pttypes = INTEGER_POINTER(ttypes);
-  double *pitimes = NUMERIC_POINTER(itimes);
-  double *pdtimes = NUMERIC_POINTER(dtimes);
-  int    *pdtypes = INTEGER_POINTER(dtypes);
-  int    *pid = INTEGER_POINTER(id);
-  int    *pparent = INTEGER_POINTER(parent);
-
-  for (int i(0); i < itlen; ++i) {
-    pitimes[i] = 0.0;
-    pdtimes[i] = 0.0;
-    pdtypes[i] = 0;
-    pid[i] = 0;
-    pparent[i] = 0;
-  }
-
-  to_array(t,pop,samples,maxlen,ptimes,pttypes);
-  inf_times(t,pop,itlen,pitimes,pdtimes,pdtypes,pid,pparent);
-
-  const char* names[7] = { "times", "ttypes", "itimes", "dtimes", "dtypes", "id", "parent" };
-  SEXP res_names = PROTECT(allocVector(STRSXP,7));
-  for (int i(0); i < 7; ++i) SET_STRING_ELT(res_names,i,mkChar(names[i]));
-
-  SEXP res = PROTECT(allocVector(VECSXP,7));
-  SET_VECTOR_ELT(res,0,times);
-  SET_VECTOR_ELT(res,1,ttypes);
-  SET_VECTOR_ELT(res,2,itimes);
-  SET_VECTOR_ELT(res,3,dtimes);
-  SET_VECTOR_ELT(res,4,dtypes);
-  SET_VECTOR_ELT(res,5,id);
-  SET_VECTOR_ELT(res,6,parent);
-  setAttrib(res, R_NamesSymbol, res_names);
-
-  UNPROTECT(13);
-  return res;
-}
-
 
