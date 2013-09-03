@@ -1,5 +1,5 @@
 0344a2ba97b35b00d677389268912f14 *ChangeLog
-9849d6dab187fcdf5e52e7bd182fd282 *DESCRIPTION
+27d8058610ff501372d13f0f2d6ea7da *DESCRIPTION
 af9e3afb9c83fb7810e3e69287d9a4b3 *LICENCE
 1e6e685650c0d0e3d55551b8eb4d91f5 *NAMESPACE
 765cd77701921cf6ba3862c29cc86f9d *R/ape2time.R
@@ -12,14 +12,13 @@ bf70ef8f97ff127a2fac3fde7cd50d17 *R/get.age.R
 1616a8642d5587db806be9ddb3960242 *R/infExpoTree.R
 581c70fd3434c589924e1b863aab82c5 *R/node.age.R
 5bb10020018f878f5e5fab93d94515d4 *R/plotLTT.R
-e8f45a6d9e45082e7410ac473ecc898c *R/pso2gnuplot.R
 1967a784979f31f960b0690ddc400b5a *R/runExpoTree.R
 ad687b199086d4986d74f27ea31dad10 *R/sim.epi.R
 68b329da9893e34099c7d8ad5cb9c940 *R/zzz.R
-ac7b10b44a3f1b6a69e6231505bbf96c *README.md
+f9e9fd0d85f5743c78dfabe1c37a34e2 *README.md
 b1b33339bb5b387fc1e84cd4c61c270c *man/ape2time.Rd
 ff85c26f042b7d62ced3aebe8d286f33 *man/epi2tree.Rd
-dfb2d46fa1b75b3fea26b0c42b93927d *man/expoTree-package.Rd
+95b227b1d7b3be72137ed1b5d43243ab *man/expoTree-package.Rd
 4f00e29173ded4b035b8bb7f4f0fbb23 *man/expoTree.optim.Rd
 f350ec444e0db30c48059c71112dee52 *man/infExpoTree.Rd
 759f28c5458bcd6cd2eecb23851c59fe *man/plotLTT.Rd

@@ -14,9 +14,9 @@
   \tabular{ll}{
     Package: \tab expoTree\cr
     Type: \tab Package\cr
-    Version: \tab 0.8\cr
-    Date: \tab 2013-01-24\cr
-    License: \tab RBSD\cr
+    Version: \tab 1.0.1\cr
+    Date: \tab 2013-09-03\cr
+    License: \tab BSD 3 clause\cr
   }
 }
 \author{
